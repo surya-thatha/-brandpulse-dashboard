@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrandPulse Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: #0a0a0f;
+    color: #e8e6f0;
+    min-height: 100vh;
+  }
+
+  /* ── Topbar ── */
+  .bd-topbar {
+    background: rgba(255,255,255,0.03);
+    border-bottom: 0.5px solid rgba(255,255,255,0.1);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .bd-logo { display: flex; align-items: center; gap: 10px; }
+  .bd-logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #7c5cfc;
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.2);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { box-shadow: 0 0 0 3px rgba(124,92,252,0.2); }
+    50%      { box-shadow: 0 0 0 6px rgba(124,92,252,0.08); }
+  }
+  .bd-logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.03em; }
+  .bd-status {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: #4ade80;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bd-status::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+  }
+
+  /* ── Tabs ── */
+  .bd-tabs {
+    display: flex;
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    padding: 0 24px;
+    background: rgba(255,255,255,0.01);
+  }
+  .bd-tab {
+    padding: 12px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: rgba(255,255,255,0.4); border-bottom: 2px solid transparent;
+    transition: all 0.2s; letter-spacing: 0.02em;
+  }
+  .bd-tab.active  { color: #c4b5fd; border-bottom-color: #7c5cfc; }
+  .bd-tab:hover:not(.active) { color: rgba(255,255,255,0.7); }
+
+  /* ── Main layout ── */
+  .bd-main {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  .bd-left  { display: flex; flex-direction: column; gap: 20px; }
+  .bd-right { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Cards ── */
+  .bd-card {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .bd-card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px;
+  }
+
+  /* ── Metrics bar ── */
+  .bd-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .bd-metric {
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 14px;
+  }
+  .bd-metric-label {
+    font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 6px;
+    font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .bd-metric-val { font-size: 26px; font-weight: 700; line-height: 1; }
+  .bd-metric-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .purple-val { color: #c4b5fd; }
+  .green-val  { color: #4ade80; }
+  .red-val    { color: #f87171; }
+  .amber-val  { color: #fbbf24; }
+
+  /* ── Panels ── */
+  .bd-panel         { display: none; }
+  .bd-panel.active  { display: block; }
+  .bd-panel > .bd-card + .bd-card { margin-top: 20px; }
+
+  /* ── Input area ── */
+  .bd-input-area textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 14px;
+    color: #e8e6f0; font-size: 14px; font-family: 'Syne', sans-serif;
+    resize: none; outline: none; transition: border-color 0.2s; min-height: 80px;
+  }
+  .bd-input-area textarea:focus { border-color: rgba(124,92,252,0.5); }
+  .bd-input-area textarea::placeholder { color: rgba(255,255,255,0.25); }
+
+  .bd-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+
+  .bd-select {
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 8px 12px;
+    color: #e8e6f0; font-size: 13px; font-family: 'Syne', sans-serif;
+    outline: none; cursor: pointer; flex: 1;
+  }
+  .bd-select option { background: #1a1a2e; }
+
+  .bd-btn {
+    padding: 9px 20px; background: #7c5cfc; border: none; border-radius: 10px;
+    color: white; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; font-family: 'Syne', sans-serif; white-space: nowrap;
+  }
+  .bd-btn:hover   { background: #9174fd; transform: translateY(-1px); }
+  .bd-btn:active  { transform: translateY(0); }
+  .bd-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── Result box ── */
+  .bd-result-box { margin-top: 14px; padding: 14px; border-radius: 12px; display: none; }
+  .bd-result-box.pos { background: rgba(74,222,128,0.08);  border: 0.5px solid rgba(74,222,128,0.3); }
+  .bd-result-box.neg { background: rgba(248,113,113,0.08); border: 0.5px solid rgba(248,113,113,0.3); }
+  .bd-result-box.neu { background: rgba(251,191,36,0.08);  border: 0.5px solid rgba(251,191,36,0.3); }
+  .bd-result-box.mix { background: rgba(124,92,252,0.08);  border: 0.5px solid rgba(124,92,252,0.3); }
+
+  .bd-result-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+  .bd-sentiment-badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 6px; text-transform: uppercase;
+  }
+  .badge-pos { background: rgba(74,222,128,0.2);  color: #4ade80; }
+  .badge-neg { background: rgba(248,113,113,0.2); color: #f87171; }
+  .badge-neu { background: rgba(251,191,36,0.2);  color: #fbbf24; }
+  .badge-mix { background: rgba(124,92,252,0.2);  color: #c4b5fd; }
+
+  .bd-score-bar-wrap { margin: 8px 0 4px; display: flex; align-items: center; gap: 8px; }
+  .bd-score-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+  .bd-score-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+  .bd-analysis-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-top: 6px; }
+
+  .bd-alert-banner {
+    background: rgba(248,113,113,0.12); border: 0.5px solid rgba(248,113,113,0.4);
+    border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #f87171;
+    margin-top: 10px; font-weight: 600; display: none; align-items: center; gap: 8px;
+  }
+
+  /* ── History ── */
+  .bd-history { max-height: 160px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+  .bd-history-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid rgba(255,255,255,0.06); font-size: 12px; }
+  .bd-history-text  { flex: 1; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bd-history-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+  .bd-history-source { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.25); }
+
+  /* ── Templates ── */
+  .bd-keyword-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .bd-kw-tag {
+    padding: 4px 10px; background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1); border-radius: 20px;
+    font-size: 11px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s;
+  }
+  .bd-kw-tag:hover { background: rgba(124,92,252,0.2); border-color: rgba(124,92,252,0.4); color: #c4b5fd; }
+
+  /* ── Crisis feed ── */
+  .bd-crisis-feeds { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .bd-feed-item { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; }
+  .bd-feed-top  { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .bd-feed-src  { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.3); }
+  .bd-feed-time { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.2); margin-left: auto; }
+  .bd-feed-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+  .bd-feed-analyze-btn {
+    margin-top: 8px; padding: 5px 12px;
+    background: rgba(124,92,252,0.15); border: 0.5px solid rgba(124,92,252,0.3);
+    border-radius: 7px; color: #c4b5fd; font-size: 11px; font-family: 'Syne', sans-serif;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .bd-feed-analyze-btn:hover { background: rgba(124,92,252,0.25); }
+
+  /* ── Monitoring ── */
+  .bd-trend-row { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+
+  /* ── Use cases ── */
+  .bd-use-cases { display: flex; flex-direction: column; gap: 8px; }
+  .bd-uc-item { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .bd-uc-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .bd-uc-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .bd-uc-desc  { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  /* ── Chart ── */
+  .bd-chart-wrap { position: relative; width: 100%; height: 160px; }
+
+  /* ── Loading animation ── */
+  @keyframes dots {
+    0%   { content: ''; }
+    33%  { content: '.'; }
+    66%  { content: '..'; }
+    100% { content: '...'; }
+  }
+  .loading-dots::after { content: ''; animation: dots 1.4s infinite; }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="bd-topbar">
+  <div class="bd-logo">
+    <div class="bd-logo-dot"></div>
+    <span class="bd-logo-text">BrandPulse Intelligence</span>
+  </div>
+  <div class="bd-status">LIVE MONITORING</div>
+</div>
+
+<!-- Tabs -->
+<div class="bd-tabs">
+  <div class="bd-tab active"  onclick="switchTab('sentiment')">Sentiment Analysis</div>
+  <div class="bd-tab"         onclick="switchTab('crisis')">Crisis Detection</div>
+  <div class="bd-tab"         onclick="switchTab('monitoring')">Brand Monitoring</div>
+  <div class="bd-tab"         onclick="switchTab('insights')">Insights</div>
+</div>
+
+<!-- Main -->
+<div class="bd-main">
+
+  <!-- LEFT -->
+  <div class="bd-left">
+
+    <!-- Metrics -->
+    <div class="bd-metrics">
+      <div class="bd-metric">
+        <div class="bd-metric-label">Mentions</div>
+        <div class="bd-metric-val purple-val" id="m-total">247</div>
+        <div class="bd-metric-sub">+18 today</div>
+      </div>
+      <div class="bd-metric">
+        <div class="bd-metric-label">Positive</div>
+        <div class="bd-metric-val green-val" id="m-pos">72%</div>
+        <div class="bd-metric-sub" id="m-pos-sub">138 posts</div>
+      </div>
+      <div class="bd-metric">
+        <div class="bd-metric-label">Negative</div>
+        <div class="bd-metric-val red-val" id="m-neg">18%</div>
+        <div class="bd-metric-sub" id="m-neg-sub">44 posts</div>
+      </div>
+      <div class="bd-metric">
+        <div class="bd-metric-label">Crisis Risk</div>
+        <div class="bd-metric-val amber-val" id="m-risk">LOW</div>
+        <div class="bd-metric-sub" id="m-risk-sub">No alerts</div>
+      </div>
+    </div>
+
+    <!-- ===== PANEL: Sentiment ===== -->
+    <div id="panel-sentiment" class="bd-panel active">
+
+      <div class="bd-card">
+        <div class="bd-card-title">Analyze Customer Feedback</div>
+        <div class="bd-input-area">
+          <textarea id="fb-text" rows="3" placeholder="Paste a customer review, tweet, or social media comment to analyze..."></textarea>
+          <div class="bd-row">
+            <select class="bd-select" id="fb-source">
+              <option>Twitter / X</option>
+              <option>Instagram</option>
+              <option>Google Reviews</option>
+              <option>App Store</option>
+              <option>Reddit</option>
+              <option>LinkedIn</option>
+            </select>
+            <select class="bd-select" id="fb-brand">
+              <option>My Brand</option>
+              <option>Competitor A</option>
+              <option>Competitor B</option>
+            </select>
+            <button class="bd-btn" onclick="analyzeSentiment()" id="analyze-btn">Analyze</button>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="bd-result-box" id="result-box">
+          <div class="bd-result-head">
+            <span class="bd-sentiment-badge" id="result-badge"></span>
+            <span style="font-size:13px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;" id="result-score"></span>
+          </div>
+          <div class="bd-score-bar-wrap">
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);width:60px;">Confidence</span>
+            <div class="bd-score-bar"><div class="bd-score-fill" id="conf-fill"></div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;" id="conf-pct"></span>
+          </div>
+          <div class="bd-analysis-text" id="result-analysis"></div>
+        </div>
+
+        <!-- Alert -->
+        <div class="bd-alert-banner" id="alert-banner">
+          &#9888; NEGATIVE SENTIMENT &mdash; Alert dispatched via SNS to response team
+        </div>
+      </div>
+
+      <!-- Quick templates -->
+      <div class="bd-card">
+        <div class="bd-card-title">Quick Templates</div>
+        <div class="bd-keyword-tags">
+          <span class="bd-kw-tag" onclick="fillTemplate('The new product update is absolutely terrible, crashed my whole workflow!')">Angry Review</span>
+          <span class="bd-kw-tag" onclick="fillTemplate('Just tried your new launch and honestly? Best thing I\'ve used all year.')">Rave Review</span>
+          <span class="bd-kw-tag" onclick="fillTemplate('Product is okay, nothing special. Does what it says but nothing more.')">Neutral</span>
+          <span class="bd-kw-tag" onclick="fillTemplate('I love the design but the customer support took 3 days to respond, very frustrating.')">Mixed</span>
+          <span class="bd-kw-tag" onclick="fillTemplate('Huge disappointment. After all the hype this is a massive step backward.')">Crisis</span>
+          <span class="bd-kw-tag" onclick="fillTemplate('Game changer! Everyone needs to try this immediately, absolutely blown away.')">Viral Positive</span>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="bd-card">
+        <div class="bd-card-title">Analysis History</div>
+        <div class="bd-history" id="history-list">
+          <div style="font-size:12px;color:rgba(255,255,255,0.2);padding:8px 0;">No analyses yet — run your first sentiment check above.</div>
+        </div>
+      </div>
+
+    </div><!-- /panel-sentiment -->
+
+    <!-- ===== PANEL: Crisis ===== -->
+    <div id="panel-crisis" class="bd-panel">
+      <div class="bd-card">
+        <div class="bd-card-title">Crisis Feed &mdash; Flagged Posts</div>
+        <div class="bd-crisis-feeds">
+
+          <div class="bd-feed-item" style="border-color:rgba(248,113,113,0.3);">
+            <div class="bd-feed-top">
+              <span style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></span>
+              <span class="bd-feed-src">Twitter/X</span>
+              <span style="font-size:10px;padding:2px 7px;background:rgba(248,113,113,0.15);color:#f87171;border-radius:5px;font-weight:700;">HIGH RISK</span>
+              <span class="bd-feed-time">2m ago</span>
+            </div>
+            <div class="bd-feed-text">"@YourBrand your app just wiped all my data during the update. This is unacceptable. I want a full refund NOW. Sharing this everywhere."</div>
+            <button class="bd-feed-analyze-btn" onclick="fillAndSwitch('YourBrand app just wiped all my data during the update. This is unacceptable. I want a full refund NOW.')">Analyze this post</button>
+          </div>
+
+          <div class="bd-feed-item" style="border-color:rgba(251,191,36,0.3);">
+            <div class="bd-feed-top">
+              <span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></span>
+              <span class="bd-feed-src">Reddit</span>
+              <span style="font-size:10px;padding:2px 7px;background:rgba(251,191,36,0.15);color:#fbbf24;border-radius:5px;font-weight:700;">MEDIUM</span>
+              <span class="bd-feed-time">14m ago</span>
+            </div>
+            <div class="bd-feed-text">"Anyone else notice the quality went way down after their recent update? Multiple people in my network saying the same thing."</div>
+            <button class="bd-feed-analyze-btn" onclick="fillAndSwitch('Anyone else notice the quality went way down after their recent update? Multiple people in my network saying the same thing.')">Analyze this post</button>
+          </div>
+
+          <div class="bd-feed-item" style="border-color:rgba(74,222,128,0.2);">
+            <div class="bd-feed-top">
+              <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>
+              <span class="bd-feed-src">Instagram</span>
+              <span style="font-size:10px;padding:2px 7px;background:rgba(74,222,128,0.15);color:#4ade80;border-radius:5px;font-weight:700;">SAFE</span>
+              <span class="bd-feed-time">31m ago</span>
+            </div>
+            <div class="bd-feed-text">"Love the new packaging! So much better than before. Keep it up team 🔥"</div>
+            <button class="bd-feed-analyze-btn" onclick="fillAndSwitch('Love the new packaging! So much better than before. Keep it up team.')">Analyze this post</button>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /panel-crisis -->
+
+    <!-- ===== PANEL: Monitoring ===== -->
+    <div id="panel-monitoring" class="bd-panel">
+      <div class="bd-card">
+        <div class="bd-card-title">Keyword Monitoring</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <input id="kw-input" placeholder="Add keyword or @mention to track..."
+            style="flex:1;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 12px;color:#e8e6f0;font-family:'Syne',sans-serif;font-size:13px;outline:none;">
+          <button class="bd-btn" onclick="addKeyword()">Track</button>
+        </div>
+        <div class="bd-keyword-tags" id="keyword-list">
+          <span class="bd-kw-tag" style="background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.3);color:#c4b5fd;">@MyBrand</span>
+          <span class="bd-kw-tag" style="background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.3);color:#c4b5fd;">#ProductLaunch</span>
+          <span class="bd-kw-tag" style="background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.3);color:#c4b5fd;">customer service</span>
+          <span class="bd-kw-tag" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#f87171;">refund</span>
+          <span class="bd-kw-tag" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#f87171;">disappointed</span>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div class="bd-trend-row"><span>Source breakdown (last 24h)</span><span>247 total</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;"><span>Twitter/X</span><span>94</span></div>
+              <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:4px;"><div style="height:100%;width:38%;background:#7c5cfc;border-radius:4px;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;"><span>Instagram</span><span>61</span></div>
+              <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:4px;"><div style="height:100%;width:25%;background:#c4b5fd;border-radius:4px;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;"><span>Google Reviews</span><span>52</span></div>
+              <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:4px;"><div style="height:100%;width:21%;background:#4ade80;border-radius:4px;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;"><span>Reddit</span><span>40</span></div>
+              <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:4px;"><div style="height:100%;width:16%;background:#fbbf24;border-radius:4px;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /panel-monitoring -->
+
+    <!-- ===== PANEL: Insights ===== -->
+    <div id="panel-insights" class="bd-panel">
+      <div class="bd-card">
+        <div class="bd-card-title">AI-Generated Insights</div>
+        <div id="insights-content" style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.7;">
+          <div style="color:rgba(255,255,255,0.25);font-size:12px;">Run 1+ analyses then click Generate Insights to get AI-powered brand recommendations.</div>
+        </div>
+        <button class="bd-btn" style="margin-top:14px;width:auto;padding:9px 18px;" onclick="generateInsights()">Generate Insights</button>
+      </div>
+    </div><!-- /panel-insights -->
+
+  </div><!-- /bd-left -->
+
+  <!-- RIGHT sidebar -->
+  <div class="bd-right">
+
+    <div class="bd-card">
+      <div class="bd-card-title">Sentiment Trend (7 days)</div>
+      <div class="bd-chart-wrap">
+        <canvas id="trend-chart" role="img" aria-label="Line chart showing positive, negative, and neutral sentiment percentages over 7 days">7-day sentiment trend</canvas>
+      </div>
+    </div>
+
+    <div class="bd-card">
+      <div class="bd-card-title">Use Cases</div>
+      <div class="bd-use-cases">
+        <div class="bd-uc-item">
+          <div class="bd-uc-icon" style="background:rgba(74,222,128,0.12);">📣</div>
+          <div>
+            <div class="bd-uc-label">Brand Monitoring</div>
+            <div class="bd-uc-desc">Track mentions across Twitter, Instagram, Reddit &amp; more</div>
+          </div>
+        </div>
+        <div class="bd-uc-item">
+          <div class="bd-uc-icon" style="background:rgba(248,113,113,0.12);">🚨</div>
+          <div>
+            <div class="bd-uc-label">Crisis Detection</div>
+            <div class="bd-uc-desc">Auto-alert on negative spikes via SNS/SES email</div>
+          </div>
+        </div>
+        <div class="bd-uc-item">
+          <div class="bd-uc-icon" style="background:rgba(124,92,252,0.12);">💬</div>
+          <div>
+            <div class="bd-uc-label">Feedback Analysis</div>
+            <div class="bd-uc-desc">NLP-powered sentiment scoring of customer reviews</div>
+          </div>
+        </div>
+        <div class="bd-uc-item">
+          <div class="bd-uc-icon" style="background:rgba(251,191,36,0.12);">📊</div>
+          <div>
+            <div class="bd-uc-label">Competitor Intelligence</div>
+            <div class="bd-uc-desc">Compare brand sentiment against market rivals</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bd-card">
+      <div class="bd-card-title">AWS Architecture</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.35);line-height:2;font-family:'DM Mono',monospace;">
+        
+        User &rarr; Cognito (Auth)<br>
+        Cognito &rarr; CloudFront (CDN)<br>
+        CloudFront &rarr; S3 (Frontend UI)<br>
+        S3 &rarr; API Gateway<br>
+        API Gateway &rarr; Lambda (Processing)<br>
+        Lambda &rarr; SNS (Email Alerts)<br>
+        Lambda &rarr; CloudWatch (Logs)<br>
+    
+      </div>
+    </div>
+
+  </div><!-- /bd-right -->
+
+</div><!-- /bd-main -->
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<script>
+  /* ─── State ─── */
+  let analysisHistory = [];
+  let posCount = 138, negCount = 44, neuCount = 65;
+
+  /* ─── Tab switching ─── */
+  function switchTab(tab) {
+    const tabs   = ['sentiment','crisis','monitoring','insights'];
+    const tabEls = document.querySelectorAll('.bd-tab');
+    tabEls.forEach((el, i) => el.classList.toggle('active', tabs[i] === tab));
+    tabs.forEach(t => {
+      const p = document.getElementById('panel-' + t);
+      if (p) p.classList.toggle('active', t === tab);
+    });
+  }
+
+  /* ─── Templates ─── */
+  function fillTemplate(text) {
+    document.getElementById('fb-text').value = text;
+    switchTab('sentiment');
+  }
+
+  function fillAndSwitch(text) {
+    document.getElementById('fb-text').value = text;
+    switchTab('sentiment');
+  }
+
+  /* ─── Keyword tracking ─── */
+  function addKeyword() {
+    const val = document.getElementById('kw-input').value.trim();
+    if (!val) return;
+    const list = document.createElement('span');
+    list.className = 'bd-kw-tag';
+    list.style.cssText = 'background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.3);color:#c4b5fd;';
+    list.textContent = val;
+    document.getElementById('keyword-list').appendChild(list);
+    document.getElementById('kw-input').value = '';
+  }
+
+  /* ─── Sentiment analysis ─── */
+  async function analyzeSentiment() {
+    const text = document.getElementById('fb-text').value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-dots">Analyzing</span>';
+
+    document.getElementById('result-box').style.display    = 'none';
+    document.getElementById('alert-banner').style.display  = 'none';
+
+    /*
+     * NOTE FOR AWS DEPLOYMENT:
+     * Replace the Anthropic API call below with your existing Lambda endpoint:
+     *
+     *   const resp = await fetch("https://maqjbmhz73.execute-api.us-east-1.amazonaws.com/analyze", {
+     *     method: "POST",
+     *     headers: { "Content-Type": "application/json" },
+     *     body: JSON.stringify({ text })
+     *   });
+     *   const data = await resp.json();
+     *   const parsed = { sentiment: data.sentiment, confidence: 0.9, score: "", summary: "", risk_level: "LOW", action: "" };
+     *
+     * The UI update code below works with either approach.
+     */
+
+     try {
+
+        const resp = await fetch("https://maqjbmhz73.execute-api.us-east-1.amazonaws.com/analyze", {
+      
+          method: "POST",
+      
+          headers: { "Content-Type": "application/json" },
+      
+          body: JSON.stringify({ text })
+      
+        });
+      
+        const data = await resp.json();
+      
+        const parsed = {
+      
+          sentiment: data.sentiment,
+      
+          confidence: 0.9,
+      
+          score: "",
+      
+          summary: "",
+      
+          risk_level: "LOW",
+      
+          action: ""
+      
+        };
+      
+        renderResult(parsed, text);
+      
+      }catch(e) {
+      document.getElementById('result-analysis').textContent = 'Analysis failed — check your connection or API key.';
+      document.getElementById('result-box').className = 'bd-result-box neu';
+      document.getElementById('result-box').style.display = 'block';
+    }
+
+    btn.disabled    = false;
+    btn.textContent = 'Analyze';
+  }
+
+  /* ─── Render result ─── */
+  function renderResult(parsed, text) {
+    const classMap  = { POSITIVE:'pos', NEGATIVE:'neg', NEUTRAL:'neu', MIXED:'mix' };
+    const badgeMap  = { POSITIVE:'badge-pos', NEGATIVE:'badge-neg', NEUTRAL:'badge-neu', MIXED:'badge-mix' };
+    const fillMap   = { POSITIVE:'#4ade80', NEGATIVE:'#f87171', NEUTRAL:'#fbbf24', MIXED:'#c4b5fd' };
+    const badgeColors = {
+      POSITIVE: 'rgba(74,222,128,0.15);color:#4ade80',
+      NEGATIVE: 'rgba(248,113,113,0.15);color:#f87171',
+      NEUTRAL:  'rgba(251,191,36,0.15);color:#fbbf24',
+      MIXED:    'rgba(124,92,252,0.15);color:#c4b5fd'
+    };
+
+    const resultBox = document.getElementById('result-box');
+    resultBox.className = 'bd-result-box ' + (classMap[parsed.sentiment] || 'neu');
+
+    document.getElementById('result-badge').className   = 'bd-sentiment-badge ' + (badgeMap[parsed.sentiment] || 'badge-neu');
+    document.getElementById('result-badge').textContent = parsed.sentiment;
+    document.getElementById('result-score').textContent = parsed.score || '';
+
+    const fill = document.getElementById('conf-fill');
+    fill.style.width      = Math.round((parsed.confidence || 0.8) * 100) + '%';
+    fill.style.background = fillMap[parsed.sentiment] || '#fbbf24';
+    document.getElementById('conf-pct').textContent = Math.round((parsed.confidence || 0.8) * 100) + '%';
+
+    document.getElementById('result-analysis').textContent =
+      (parsed.summary || '') + (parsed.action ? ' → ' + parsed.action : '');
+
+    resultBox.style.display = 'block';
+
+    if (parsed.sentiment === 'NEGATIVE' || parsed.risk_level === 'HIGH' || parsed.risk_level === 'CRITICAL') {
+      const banner = document.getElementById('alert-banner');
+      banner.style.display = 'flex';
+    }
+
+    /* History entry */
+    const source      = document.getElementById('fb-source').value;
+    const historyList = document.getElementById('history-list');
+    if (analysisHistory.length === 0) historyList.innerHTML = '';
+
+    analysisHistory.unshift({ text: text.slice(0, 60) + (text.length > 60 ? '...' : ''), sentiment: parsed.sentiment, source });
+
+    const item = document.createElement('div');
+    item.className = 'bd-history-item';
+    item.innerHTML =
+      `<span class="bd-history-source">${source.split('/')[0]}</span>
+       <span class="bd-history-text">${analysisHistory[0].text}</span>
+       <span class="bd-history-badge" style="background:${badgeColors[parsed.sentiment] || badgeColors.NEUTRAL}">${parsed.sentiment}</span>`;
+    historyList.prepend(item);
+
+    /* Update metrics */
+    if (parsed.sentiment === 'POSITIVE') posCount++;
+    else if (parsed.sentiment === 'NEGATIVE') negCount++;
+    else neuCount++;
+
+    const total = posCount + negCount + neuCount;
+    document.getElementById('m-total').textContent   = total;
+    document.getElementById('m-pos').textContent     = Math.round(posCount / total * 100) + '%';
+    document.getElementById('m-neg').textContent     = Math.round(negCount / total * 100) + '%';
+    document.getElementById('m-pos-sub').textContent = posCount + ' posts';
+    document.getElementById('m-neg-sub').textContent = negCount + ' posts';
+
+    const negPct  = negCount / total;
+    const riskEl  = document.getElementById('m-risk');
+    const riskSub = document.getElementById('m-risk-sub');
+    if (negPct > 0.35) {
+      riskEl.textContent = 'HIGH'; riskEl.className = 'bd-metric-val red-val'; riskSub.textContent = 'Alert sent';
+    } else if (negPct > 0.25) {
+      riskEl.textContent = 'MED';  riskEl.className = 'bd-metric-val amber-val'; riskSub.textContent = 'Watch closely';
+    } else {
+      riskEl.textContent = 'LOW';  riskEl.className = 'bd-metric-val amber-val'; riskSub.textContent = 'No alerts';
+    }
+  }
+
+  /* ─── AI Insights ─── */
+  async function generateInsights() {
+    if (analysisHistory.length === 0) {
+      document.getElementById('insights-content').innerHTML =
+        '<div style="color:#f87171;font-size:12px;">Run at least one analysis first.</div>';
+      return;
+    }
+    const insightsEl = document.getElementById('insights-content');
+    insightsEl.innerHTML = '<span class="loading-dots" style="color:rgba(255,255,255,0.4);font-size:13px;">Generating insights</span>';
+
+    const summary = analysisHistory.map(h => `${h.source}: ${h.sentiment} — "${h.text}"`).join('\n');
+
+    try {
+      const resp = await fetch("https://maqjbmhz73.execute-api.us-east-1.amazonaws.com/analyze", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `You are a brand intelligence analyst. Based on these recent sentiment analyses, give 3 concise strategic insights for the brand team. Respond ONLY with a JSON array, no markdown:
+[{"title":"insight title","detail":"2-3 sentence actionable insight","priority":"HIGH or MEDIUM or LOW"}]
+
+Data:\n${summary}`
+          }]
+        })
+      });
+
+      const data   = await resp.json();
+      const raw    = data.content.map(c => c.text || '').join('');
+      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+      const prioColors = { HIGH: '#f87171', MEDIUM: '#fbbf24', LOW: '#4ade80' };
+      insightsEl.innerHTML = parsed.map(ins =>
+        `<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid rgba(255,255,255,0.07);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;color:#e8e6f0;">${ins.title}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(0,0,0,0.3);color:${prioColors[ins.priority]||'#fbbf24'}">${ins.priority}</span>
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;">${ins.detail}</div>
+        </div>`
+      ).join('');
+
+    } catch(e) {
+      insightsEl.innerHTML = '<div style="color:#f87171;font-size:12px;">Failed to generate insights. Try again.</div>';
+    }
+  }
+
+  /* ─── Trend Chart ─── */
+  new Chart(document.getElementById('trend-chart'), {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [
+        { label: 'Positive', data: [65,70,68,75,72,78,72], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.08)',  tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3 },
+        { label: 'Negative', data: [22,18,20,15,18,14,18], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.05)', tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3 },
+        { label: 'Neutral',  data: [13,12,12,10,10,8,10],  borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.05)',  tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
