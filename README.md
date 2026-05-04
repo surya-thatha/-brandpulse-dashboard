@@ -80,8 +80,8 @@ User → Cognito → CloudFront → S3 → API Gateway → Lambda → DynamoDB
 
 ## 📷 Preview
 
-ss.png
-
+## 📷 Preview
+![Dashboard](screenshot.png)
 ---
 
 ## 👨‍💻 Author
