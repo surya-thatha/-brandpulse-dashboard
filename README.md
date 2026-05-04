@@ -76,13 +76,7 @@ User → Cognito → CloudFront → S3 → API Gateway → Lambda → DynamoDB
 - Improve sentiment accuracy using ML models  
 - Advanced analytics dashboard  
 
----
 
-## 📷 Preview
-
-## 📷 Preview
-![Dashboard](screenshot.png)
----
 
 ## 👨‍💻 Author
 
